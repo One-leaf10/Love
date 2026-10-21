@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>two souls, one universe</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Space+Grotesk:wght@300&display=swap');
+  body { margin:0; overflow:hidden; background:#050510; touch-action:none; }
+  canvas { display:block; }
+  .top { position:fixed; top:8%; width:100%; text-align:center; color:#fff; font-family:'Space Grotesk'; letter-spacing:0.3em; font-size:10px; opacity:0.7; }
+  .bottom { position:fixed; bottom:6%; width:100%; text-align:center; color:#fff; font-family:'Space Grotesk'; letter-spacing:0.2em; font-size:9px; opacity:0.6; }
+  .center-msg { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; color:white; opacity:0; pointer-events:none; transition:1s; }
+  .center-msg.show { opacity:1; pointer-events:all; }
+  .center-msg h1 { font-family:'Cormorant Garamond'; font-weight:300; font-style:italic; font-size:28px; margin:0; }
+  .center-msg p { font-family:'Space Grotesk'; font-size:9px; letter-spacing:0.3em; margin-top:10px; opacity:0.6; }
+  .envelope { font-size:24px; cursor:pointer; margin-top:20px; animation: bounce 1.5s infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  #letter { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.8); background:#1a1525e6; backdrop-filter:blur(12px); border:1px solid #ff5a8a44; border-radius:16px; padding:30px; width:85%; max-width:340px; color:#fff; opacity:0; pointer-events:none; transition:0.6s; }
+  #letter.show { opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:all; }
+  #letter h2 { font-family:'Cormorant Garamond'; font-style:italic; font-weight:300; margin:0 0 15px; }
+  #letter p { font-family:'Space Grotesk'; font-size:13px; line-height:1.6; opacity:0.8; }
+  .close { position:absolute; top:12px; right:16px; cursor:pointer; opacity:0.5; }
+</style>
+</head>
+<body>
+<div class="top">TWO SOULS, ONE UNIVERSE.</div>
+<div class="bottom" id="hint">DRAG THE SOULS TOGETHER •</div>
+<canvas id="c"></canvas>
+
+<div class="center-msg" id="msg">
+  <p>IN 7 BILLION PEOPLE</p>
+  <h1>"...you found me."</h1>
+  <p>SOME THINGS ARE WRITTEN IN THE STARS</p>
+  <div class="envelope" onclick="openLetter()">💌</div>
+  <p id="hint2">PULL APART WITH TWO FINGERS TO SEPARATE •</p>
+</div>
+
+<div id="letter">
+  <span class="close" onclick="closeLetter()">✕</span>
+  <h2>Dear Love,</h2>
+  <p>
+    My love for you grows stronger with every passing second. 
+    You are the missing piece of my soul that I finally found. 
+    Thank you for being my universe, my everything.<br><br>
+    I wish I could love you someday.<br><br>
+    With all my love,<br>From: You
+  </p>
+</div>
+
+<script>
+const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
+let W,H, stars=[];
+function resize(){W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;}
+resize(); window.onresize=resize;
+for(let i=0;i<200;i++) stars.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.5});
+
+let s1={x:W*0.25,y:H*0.5,tx:W*0.25,ty:H*0.5,trail:[]}, s2={x:W*0.75,y:H*0.5,tx:W*0.75,ty:H*0.5,trail:[]};
+let dragging=null, merged=false, hearts=[];
+
+function heartPos(t,scale){ let x=16*Math.pow(Math.sin(t),3); let y=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)); return {x:x*scale,y:y*scale}; }
+
+function draw(){
+  ctx.fillStyle='#050510'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='white';
+  stars.forEach(s=>{ ctx.globalAlpha=0.3+Math.sin(Date.now()/1000+s.x)*0.3; ctx.beginPath(); ctx.arc((s.x%W),(s.y%H),s.r,0,Math.PI*2); ctx.fill(); });
+  ctx.globalAlpha=1;
+
+  if(!merged){
+    let dx=s1.x-s2.x, dy=s1.y-s2.y, dist=Math.hypot(dx,dy);
+    if(dist<120){ merged=true; document.getElementById('msg').classList.add('show'); document.getElementById('hint').style.opacity=0; for(let i=0;i<150;i++) hearts.push({t:Math.random()*Math.PI*2, r:Math.random()}); }
+  }
+
+  [s1,s2].forEach(s=>{
+    s.x+=(s.tx-s.x)*0.08; s.y+=(s.ty-s.y)*0.08;
+    s.trail.push({x:s.x,y:s.y}); if(s.trail.length>25) s.trail.shift();
+    s.trail.forEach((p,i)=>{ ctx.fillStyle=`rgba(255,${s===s1?80:50},${s===s1?100:140},${i/s.trail.length})`; ctx.beginPath(); ctx.arc(p.x,p.y,8*i/s.trail.length,0,Math.PI*2); ctx.fill(); });
+    let grad=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,18); grad.addColorStop(0,'#ff3b7f'); grad.addColorStop(1,'transparent'); ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(s.x,s.y,18,0,Math.PI*2); ctx.fill();
+  });
+
+  if(
